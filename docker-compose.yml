@@ -1,0 +1,25 @@
+version: '3'
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    environment:
+      - DATABASE_HOST=localhost
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=12345
+      - DATABASE_NAME=VetGPT
+
+  postgres:
+    image: postgres:12
+    container_name: vetgpt
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: VetGPT
+    volumes:
+      - ./data:/var/lib/postgresql/data

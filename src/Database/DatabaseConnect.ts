@@ -1,3 +1,4 @@
+
 import { DataSource } from "typeorm";
 
 class DatabaseConnect {
@@ -12,7 +13,11 @@ class DatabaseConnect {
             username: process.env.DB_USER,
             password: "12345",
             database: process.env.DB_NAME,
-        });
+            entities: ["Entity/*.ts"],
+            logging: true,
+            migrations: [__dirname + "/../migration/*.ts"],
+        },
+    );
     }
 
     public static async getInstance(): Promise<DatabaseConnect> {

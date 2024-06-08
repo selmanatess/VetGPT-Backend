@@ -1,32 +1,78 @@
-import * as dotenv from 'dotenv';
-import path from 'path';
-import DatabaseConnect from './Database/DatabaseConnect';
+import * as express from "express"
+import * as bodyParser from "body-parser"
+import { Request, Response,NextFunction } from "express"
+import { AppDataSource } from "./data-source"
+import { Routes } from "./routes"
+import { Users } from "./Entity/User"
+import * as dotenv from "dotenv"
+import { Diases } from "./Entity/Diases"
 
-dotenv.config({ path: path.join('C:\\Users\\selma\\Desktop\\VetGPT\\vetgpt\\backendTypescript', 'dev.env') }
-);
+dotenv.config();
 
+console.log(process.env.POSTGRES_URL+"sdadasdsa");
 
+AppDataSource.initialize().then(async () => {
 
-class App {
-    private static instance: App;
-    private database: DatabaseConnect;
+    // create express app
+    const app = express()
+    app.use(bodyParser.json())
+  
+    
 
-    private constructor() {
-        this.database = await DatabaseConnect.getInstance(); // Await the promise to resolve before assigning to this.database
-    }
+    // register express routes from defined application routes
+    Routes.forEach(route => {
+        route.router.forEach(subRoute => {
+            (app as any)[subRoute.method](
+                `${route.route}${subRoute.route}`,
+                (req: Request, res: Response, next: NextFunction) => {
+                         const result = (new (subRoute.controller as any)())[subRoute.action](req, res, next);
+                    if (result instanceof Promise) {
+                        result.then(result => result !== null && result !== undefined ? res.send(result) : undefined);
+                    } else if (result !== null && result !== undefined) {
+                        res.json(result);
+                    }
+                }
+            );
+        });
+    });
 
-    public static async getInstance(): Promise<App> {
-        if (!App.instance) {
-            App.instance = new App();
-        }
+    // setup express app here
+    // ...
 
-        return App.instance;
-    }
+    // start express server
+    app.listen(8080)
 
-    public async start(): Promise<void> {
-        console.log("App is starting...");
-        await this.database;
-        console.log("App has started!");
-    }
-}
- const app = App.getInstance();
+    // insert new users for test
+    await AppDataSource.manager.save(
+        AppDataSource.manager.create(Users, {
+            firstName: "Selman ATEŞ",
+            lastName: "Saw",
+            email: "selmanates007@gmail.com",
+            password: "12345",
+            signDate: new Date()
+        })
+    )
+await AppDataSource.manager.save(
+        AppDataSource.manager.create(Diases, {
+            Name: "Covid-19",
+            Species: "Virus",
+            definition: "Covid-19 is a disease caused by a new strain of coronavirus. 'CO' stands for corona, 'VI' for virus, 'D' for disease, and 19 for the year it emerged.",
+            symptom: "Fever, cough, shortness of breath, fatigue, body aches, loss of taste or smell, sore throat, nausea, vomiting, diarrhea, nasal congestion, runny nose, headache, muscle pain, chills, confusion, dizziness, loss of appetite, conjunctivitis, and skin rash.",
+            treatment: "There is no specific treatment for COVID-19, but many of the symptoms can be treated. Treatment is based on the patient's symptoms. Supportive care is provided to help relieve symptoms. For severe cases, treatment includes care to support vital organ functions.",
+            isContagious: true,
+            medicines: "Remdesivir, Dexamethasone, Tocilizumab, Ivermectin, Hydroxychloroquine, Azithromycin, Lopinavir, Ritonavir, Favipiravir, Baricitinib, Anakinra, Colchicine, Convalescent plasma, Monoclonal antibodies"
+        })
+    )
+    // await AppDataSource.manager.save(
+    //     AppDataSource.manager.create(Users, {
+    //         firstName: "Phantom",
+    //         lastName: "Assassin",
+    //         age: 24,
+    //         isActive: false
+        
+    //     })
+    // )
+
+    console.log("Express server has started on port 3000. Open http://localhost:3000/users to see results")
+
+}).catch(error => console.log(error))
