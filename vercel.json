@@ -1,16 +1,20 @@
-{
-    "version": 2,
-    "builds": [
-      {
-        "src": "index.js",
-        "use": "@vercel/node"
-      }
-    ],
-    "routes": [
-      {
-        "src": "/(.*)",
-       
-      }
-    ]
 
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/index.ts", // Ana giriş noktanızı belirtin
+      "use": "@vercel/node" // Hangi builder'ın kullanılacağını belirtin
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/*", // API endpointlerini belirtin
+      "dest": "src/index.ts" // Hangi dosyanın API endpointlerini işleyeceğini belirtin
+    },
+    {
+      "src": "/(.*)", // Diğer istekler için ana giriş noktasını belirtin
+      "dest": "src/index.ts" // Ana giriş noktasının dosya yolunu belirtin
+    }
+  ]
 }
